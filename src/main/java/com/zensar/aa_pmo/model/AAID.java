@@ -11,6 +11,15 @@ public class AAID {
 	String endDate;
 	String employeeName;
 	String AAManager;
+	// int empId;
+
+	/*
+	 * public int getEmpId() { return empId; }
+	 */
+
+	/*
+	 * public void setEmpId(int empId) { this.empId = empId; }
+	 */
 
 	public String getLineManager() {
 		return lineManager;
@@ -72,7 +81,7 @@ public class AAID {
 	}
 
 	public AAID(String lineManager, String lineManagerEmail, String workLocation, String startDate, String endDate,
-			String employeeName, String aAManager) {
+			String employeeName, String aAManager/* , int empId */) {
 		super();
 		this.lineManager = lineManager;
 		this.lineManagerEmail = lineManagerEmail;
@@ -81,13 +90,14 @@ public class AAID {
 		this.endDate = endDate;
 		this.employeeName = employeeName;
 		AAManager = aAManager;
+//		this.empId = empId;
 	}
 
 	@Override
 	public String toString() {
 		return "AAID [lineManager=" + lineManager + ", lineManagerEmail=" + lineManagerEmail + ", workLocation="
 				+ workLocation + ", startDate=" + startDate + ", endDate=" + endDate + ", employeeName=" + employeeName
-				+ ", AAManager=" + AAManager + "]";
+				+ ", AAManager=" + AAManager + /* + , empId=" + empId + */ "]";
 	}
 
 }

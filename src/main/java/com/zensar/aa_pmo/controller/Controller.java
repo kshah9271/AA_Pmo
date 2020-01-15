@@ -1,17 +1,12 @@
 package com.zensar.aa_pmo.controller;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
-import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.Produces;
-
-import org.hibernate.mapping.Array;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,9 +17,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
+import com.zensar.aa_pmo.dto.MailRequest;
+import com.zensar.aa_pmo.dto.MailResponse;
 import com.zensar.aa_pmo.model.AAID;
 import com.zensar.aa_pmo.model.Employee;
-import com.zensar.aa_pmo.model.Mail;
 import com.zensar.aa_pmo.service.RestService;
 
 @RestController
@@ -34,6 +30,8 @@ public class Controller {
 
 	@Autowired
 	RestService service;
+
+	String from = "something@gmail.com";
 
 	@GetMapping(value = "/")
 	public String Hello() {
@@ -55,7 +53,11 @@ public class Controller {
 				System.out.println(addEmployee);
 
 				System.out.println("Sending mail to ...... " + employee.getEmail());
-				service.RegistrationEmail(employee);
+				// service.RegistrationEmail(employee);
+				String template = "emailRegistrationTemplate.ftl";
+				String subject = "Thanks for Registering to AA-Employee Portal";
+				MailRequest request = new MailRequest(employee.getEmpName(), employee.getEmail(), from, subject);
+				sendEmail(request, employee, template);
 				return employee;
 			} else {
 				System.err.println("Find Employee = false Employee Insertion Failed");
@@ -80,7 +82,11 @@ public class Controller {
 				System.out.println("Find Employee = true Employee Updation Successful");
 				System.out.println(updateEmployee);
 				System.out.println("Sending mail to ...... " + employee.getEmail());
-				service.ProfileUpdationEmail(employee);
+				// service.ProfileUpdationEmail(employee);
+				String template = "emailUpdationTemplate.ftl";
+				String subject = "Thanks for Updating your Profile on AA-Employee Portal";
+				MailRequest request = new MailRequest(employee.getEmpName(), employee.getEmail(), from, subject);
+				sendEmail(request, employee, template);
 				return employee;
 				// return "Employee Insertion Successful";
 			} else {
@@ -115,7 +121,11 @@ public class Controller {
 		System.out.println("Employee Deletion : " + employee);
 		try {
 			if (findEmployee == true) {
-				service.profileDeletionEmail(employee);
+				// service.profileDeletionEmail(employee);
+				String template = "emailDeletionTemplate.ftl";
+				String subject = "Sorry Your Profile is deleted from the AA-Employee Portal";
+				MailRequest request = new MailRequest(employee.getEmpName(), employee.getEmail(), from, subject);
+				sendEmail(request, employee, template);
 				System.out.println("Employee is : " + id);
 				System.out.println("Employee Deletion Successful");
 				System.out.println("Sending mail to ...... " + employee.getEmail());
@@ -142,28 +152,75 @@ public class Controller {
 		return retrieve;
 	}
 
-	@PostMapping(value = "/test")
-	public AAID testAAid(@RequestBody AAID aaid) {
-		System.out.println("Into Test AAID");
+	@PostMapping(value = "/AAIDGeneration")
+	public AAID AAIDGeneration(@RequestBody AAID aaid) {
+		System.out.println("Into AAID Generation");
 		System.out.println(aaid);
-		service.approveAAIDEmail(aaid);
+		// service.approveAAIDEmail(aaid);
+		// Employee retrieveEmployee = service.retrieveEmployee(aaid.getEmpId());
+		String template = "emailAAIDGenerationTemplate.ftl";
+		String subject = "Approval for AA USER ID";
+		MailRequest request = new MailRequest(aaid.getEmployeeName(), aaid.getLineManagerEmail(), from, subject);
+		MailResponse sendEmailAAID = sendEmailAAID(request, aaid, template);
+		System.out.println("status : "+sendEmailAAID);
 		System.out.println("Mail sent for approval");
 		return aaid;
+	}
+
+	@PostMapping(value = "/AAIDRevoke")
+	public AAID AAidRevoke(@RequestBody AAID aaid) {
+		System.out.println("Into AAID Revoke");
+		System.out.println(aaid);
+		// service.approveAAIDEmail(aaid);
+		// Employee retrieveEmployee = service.retrieveEmployee(aaid.getEmpId());
+		String template = "emailAAIDRevokeTemplate.ftl";
+		String subject = "Approval to Revoke AA USER ID";
+		MailRequest request = new MailRequest(aaid.getEmployeeName(), aaid.getLineManagerEmail(), from, subject);
+		MailResponse sendEmailAAID = sendEmailAAID(request, aaid, template);
+		System.out.println("status : "+sendEmailAAID);
+		System.out.println("Mail sent for revoking");
+		return aaid;
+	}
+
+	public MailResponse sendEmail(@RequestBody MailRequest request, Employee employee, String template) {
+
+		Map<String, Object> model = new HashMap();
+		model.put("empID", employee.getEmpId());
+		model.put("empName", employee.getEmpName());
+		model.put("empNumber", employee.getEmpNumber());
+		model.put("empDesignation", employee.getEmpDesignation());
+		model.put("empEmail", employee.getEmail());
+		model.put("empPassword", employee.getPassword());
+		model.put("empRole", employee.getRole());
+		model.put("empStatus", employee.getStatus());
+		return service.sendEmail(request, model, template);
+	}
+
+	public MailResponse sendEmailAAID(@RequestBody MailRequest request, AAID aaid, String template) {
+
+		Map<String, Object> model = new HashMap();
+		model.put("AAManager", aaid.getAAManager());
+		model.put("lineManager", aaid.getLineManager());
+		model.put("lineManagerEmail", aaid.getLineManagerEmail());
+		model.put("empName", aaid.getEmployeeName());
+		model.put("workLocation", aaid.getWorkLocation());
+		model.put("startDate", aaid.getStartDate());
+		model.put("endDate", aaid.getEndDate());
+		return service.sendEmail(request, model, template);
 	}
 }
 
 /*
  * Testing JSON Format { "srNo":"0", "empId":"10000", "empName":"something",
  * "empDesignation":"something", "empNumber":"1234567890",
- * "email":"something@gmail.com", "password":"password", "status":"Verified"
- * }
+ * "email":"something@gmail.com", "password":"password", "status":"Verified" }
  */
 
 /*
- * Testing XML Format <Employee> <empId>11100</empId> <empName>something</empName>
- * <empDesignation>something</empDesignation> <empNumber>1234567890</empNumber>
- * <email>something@gmail.com</email> <password>password</password>
- * <status>Verified</status> </Employee>
+ * Testing XML Format <Employee> <empId>11100</empId>
+ * <empName>something</empName> <empDesignation>something</empDesignation>
+ * <empNumber>1234567890</empNumber> <email>something@gmail.com</email>
+ * <password>password</password> <status>Verified</status> </Employee>
  */
 
 /*
